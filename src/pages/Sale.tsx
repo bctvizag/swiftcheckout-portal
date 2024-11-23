@@ -3,6 +3,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Search, ShoppingCart, X } from "lucide-react";
+import { useMutation } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 interface Product {
   id: number;
@@ -16,6 +19,7 @@ interface CartItem extends Product {
 
 const Sale = () => {
   const [cart, setCart] = useState<CartItem[]>([]);
+  const navigate = useNavigate();
   
   const products: Product[] = [
     { id: 1, name: "Product 1", price: 9.99 },
@@ -45,6 +49,44 @@ const Sale = () => {
     (sum, item) => sum + item.price * item.quantity,
     0
   );
+
+  const completeSaleMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetch('http://localhost:3000/api/orders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          total,
+          status: 'Completed',
+          items: cart,
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to complete sale');
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      toast.success('Sale completed successfully');
+      setCart([]);
+      navigate('/orders');
+    },
+    onError: () => {
+      toast.error('Failed to complete sale');
+    },
+  });
+
+  const handleCompleteSale = () => {
+    if (cart.length === 0) {
+      toast.error('Cart is empty');
+      return;
+    }
+    completeSaleMutation.mutate();
+  };
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -112,8 +154,13 @@ const Sale = () => {
             </div>
           </div>
 
-          <Button className="w-full mt-6" size="lg">
-            Complete Sale
+          <Button 
+            className="w-full mt-6" 
+            size="lg"
+            onClick={handleCompleteSale}
+            disabled={completeSaleMutation.isPending}
+          >
+            {completeSaleMutation.isPending ? 'Processing...' : 'Complete Sale'}
           </Button>
         </Card>
       </div>

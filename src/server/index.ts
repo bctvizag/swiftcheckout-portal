@@ -35,6 +35,21 @@ app.get("/api/orders", async (req, res) => {
   }
 });
 
+app.post("/api/orders", async (req, res) => {
+  try {
+    const { total, status } = req.body;
+    const [orderId] = await db("orders").insert({
+      total,
+      status,
+      created_at: new Date(),
+      updated_at: new Date(),
+    });
+    res.status(201).json({ id: orderId });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to create order" });
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
