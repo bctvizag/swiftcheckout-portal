@@ -1,0 +1,17 @@
+{
+    "name": "swiftcheckout",
+    "version": "1.0.0",
+    "private": true,
+    "workspaces": [
+        "frontEnd",
+        "backEnd"
+    ],
+    "scripts": {
+        "dev:frontend": "cd frontEnd && npm run dev",
+        "dev:backend": "cd backEnd && npm run dev",
+        "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\""
+    },
+    "devDependencies": {
+        "concurrently": "^9.1.0"
+    }
+}
