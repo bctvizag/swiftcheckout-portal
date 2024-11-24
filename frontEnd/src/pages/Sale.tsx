@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Search, ShoppingCart, X } from "lucide-react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 
@@ -21,11 +21,22 @@ const Sale = () => {
   const [cart, setCart] = useState<CartItem[]>([]);
   const navigate = useNavigate();
   
-  const products: Product[] = [
-    { id: 1, name: "Product 1", price: 9.99 },
-    { id: 2, name: "Product 2", price: 19.99 },
-    { id: 3, name: "Product 3", price: 29.99 },
-  ];
+  const { data: products = [], isLoading, error } = useQuery({
+    queryKey: ['products'],
+    queryFn: async () => {
+      try {
+        const response = await fetch('http://localhost:3000/api/products');
+        if (!response.ok) {
+          throw new Error('Failed to fetch products');
+        }
+        return response.json();
+      } catch (err) {
+        toast.error("Cannot connect to server. Please ensure the backend is running.");
+        throw err;
+      }
+    },
+    retry: 1,
+  });
 
   const addToCart = (product: Product) => {
     setCart((currentCart) => {
@@ -87,6 +98,19 @@ const Sale = () => {
     }
     completeSaleMutation.mutate();
   };
+
+  if (isLoading) {
+    return <div className="flex justify-center items-center h-64">Loading...</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 space-y-4">
+        <p className="text-red-500">Failed to load products</p>
+        <Button onClick={() => window.location.reload()}>Retry</Button>
+      </div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

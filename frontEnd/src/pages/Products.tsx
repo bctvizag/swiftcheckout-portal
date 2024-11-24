@@ -1,3 +1,4 @@
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, Search } from "lucide-react";
@@ -10,12 +11,28 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
+interface Product {
+  id: number;
+  name: string;
+  price: number;
+  stock: number;
+}
+
 const Products = () => {
-  const products = [
-    { id: 1, name: "Product 1", price: 9.99, stock: 50 },
-    { id: 2, name: "Product 2", price: 19.99, stock: 30 },
-    { id: 3, name: "Product 3", price: 29.99, stock: 20 },
-  ];
+  const { data: products = [], isLoading } = useQuery({
+    queryKey: ['products'],
+    queryFn: async () => {
+      const response = await fetch('http://localhost:3000/api/products');
+      if (!response.ok) {
+        throw new Error('Failed to fetch products');
+      }
+      return response.json();
+    },
+  });
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className="space-y-8">
@@ -42,7 +59,7 @@ const Products = () => {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {products.map((product) => (
+          {products.map((product: Product) => (
             <TableRow key={product.id}>
               <TableCell>{product.name}</TableCell>
               <TableCell>${product.price}</TableCell>
