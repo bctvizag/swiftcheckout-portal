@@ -21,15 +21,21 @@ const Sale = () => {
   const [cart, setCart] = useState<CartItem[]>([]);
   const navigate = useNavigate();
   
-  const { data: products = [], isLoading } = useQuery({
+  const { data: products = [], isLoading, error } = useQuery({
     queryKey: ['products'],
     queryFn: async () => {
-      const response = await fetch('http://localhost:3000/api/products');
-      if (!response.ok) {
-        throw new Error('Failed to fetch products');
+      try {
+        const response = await fetch('http://localhost:3000/api/products');
+        if (!response.ok) {
+          throw new Error('Failed to fetch products');
+        }
+        return response.json();
+      } catch (err) {
+        toast.error("Cannot connect to server. Please ensure the backend is running.");
+        throw err;
       }
-      return response.json();
     },
+    retry: 1,
   });
 
   const addToCart = (product: Product) => {
@@ -94,7 +100,16 @@ const Sale = () => {
   };
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <div className="flex justify-center items-center h-64">Loading...</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 space-y-4">
+        <p className="text-red-500">Failed to load products</p>
+        <Button onClick={() => window.location.reload()}>Retry</Button>
+      </div>
+    );
   }
 
   return (
